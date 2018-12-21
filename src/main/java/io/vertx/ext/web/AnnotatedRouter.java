@@ -28,29 +28,29 @@ import io.vertx.ext.web.annotations.impl.Processor;
  */
 public interface AnnotatedRouter {
 
-  /**
-   * Transform a list of POJOs annotated with the provided annotations into a new Router object
-   *
-   * @param vertx the vertx instance (required to build the router object)
-   * @param objs the pojos to process
-   * @return router object
-   */
-  static Router create(final Vertx vertx, final Object... objs) {
-    return append(Router.router(vertx), objs);
-  }
-
-  /**
-   * Merges a list of POJOs annotated with the provided annotations into a provided Router object
-   *
-   * @param router router object initialized outside this builder
-   * @param objs the pojos to process
-   * @return router object
-   */
-  static Router append(final Router router, Object... objs) {
-    for (Object o : objs) {
-      Processor.process(router, o);
+    /**
+     * Transform a list of POJOs annotated with the provided annotations into a new Router object
+     *
+     * @param vertx the vertx instance (required to build the router object)
+     * @param objs the pojos to process
+     * @return router object
+     */
+    static Router create(final Vertx vertx, final Object... objs) {
+        return AnnotatedRouter.append(Router.router(vertx), objs);
     }
 
-    return router;
-  }
+    /**
+     * Merges a list of POJOs annotated with the provided annotations into a provided Router object
+     *
+     * @param router router object initialized outside this builder
+     * @param objs the pojos to process
+     * @return router object
+     */
+    static Router append(final Router router, Object... objs) {
+        for (Object o : objs) {
+            Processor.process(router, o);
+        }
+
+        return router;
+    }
 }

@@ -32,6 +32,4 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
-public @interface DELETE {
-  String value();
-}
+public @interface DELETE { }

@@ -18,73 +18,118 @@
  */
 package io.vertx.ext.web.annotations.impl;
 
-import io.vertx.core.Handler;
+import java.lang.invoke.MethodHandle;
+import java.lang.reflect.Method;
+
+import io.vertx.core.http.HttpMethod;
+import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.annotations.*;
-
-import java.lang.invoke.MethodHandle;
-import java.lang.reflect.Method;
 
 /**
  * @author <a href="mailto:pmlopes@gmail.com">Paulo Lopes</a>
  */
 public class RouterProcessorHandler extends AbstractAnnotationHandler<Router> {
 
-  public RouterProcessorHandler() {
-    super(Router.class);
-  }
+    public RouterProcessorHandler() {
+        super(Router.class);
+    }
 
-  @Override
-  public void process(final Router router, final Object instance, final Class<?> clazz, final Method method) {
+    @Override
+    public void process(final Router router, final Object instance, final Class<?> clazz, final Method method) {
+        if (isValidMethod(method)) {
+            // create a base route
+            Route route = router.route();
 
-    // process the methods that have both RoutingContext and Handler
+            // handler annotations
+            if (Processor.isCompatible(method, Handler.class, RoutingContext.class)) {
+                Handler annotation = Processor.getAnnotation(method, Handler.class);
+                MethodHandle methodHandle = Processor.getMethodHandle(method, RoutingContext.class);
 
-    if (Processor.isCompatible(method, ALL.class, RoutingContext.class)) {
-      MethodHandle methodHandle = Processor.getMethodHandle(method, RoutingContext.class);
-      router.route(Processor.getAnnotation(method, CONNECT.class).value()).handler(wrap(instance, methodHandle));
-    }
-    if (Processor.isCompatible(method, CONNECT.class, RoutingContext.class)) {
-      MethodHandle methodHandle = Processor.getMethodHandle(method, RoutingContext.class);
-      router.connect(Processor.getAnnotation(method, CONNECT.class).value()).handler(wrap(instance, methodHandle));
-    }
-    if (Processor.isCompatible(method, OPTIONS.class, RoutingContext.class)) {
-      MethodHandle methodHandle = Processor.getMethodHandle(method, RoutingContext.class);
-      router.options(Processor.getAnnotation(method, OPTIONS.class).value()).handler(wrap(instance, methodHandle));
-    }
-    if (Processor.isCompatible(method, HEAD.class, RoutingContext.class)) {
-      MethodHandle methodHandle = Processor.getMethodHandle(method, RoutingContext.class);
-      router.head(Processor.getAnnotation(method, HEAD.class).value()).handler(wrap(instance, methodHandle));
-    }
-    if (Processor.isCompatible(method, GET.class, RoutingContext.class)) {
-      MethodHandle methodHandle = Processor.getMethodHandle(method, RoutingContext.class);
-      router.get(Processor.getAnnotation(method, GET.class).value()).handler(wrap(instance, methodHandle));
-    }
-    if (Processor.isCompatible(method, POST.class, RoutingContext.class)) {
-      MethodHandle methodHandle = Processor.getMethodHandle(method, RoutingContext.class);
-      router.post(Processor.getAnnotation(method, POST.class).value()).handler(wrap(instance, methodHandle));
-    }
-    if (Processor.isCompatible(method, PUT.class, RoutingContext.class)) {
-      MethodHandle methodHandle = Processor.getMethodHandle(method, RoutingContext.class);
-      router.put(Processor.getAnnotation(method, PUT.class).value()).handler(wrap(instance, methodHandle));
-    }
-    if (Processor.isCompatible(method, PATCH.class, RoutingContext.class)) {
-      MethodHandle methodHandle = Processor.getMethodHandle(method, RoutingContext.class);
-      router.patch(Processor.getAnnotation(method, PATCH.class).value()).handler(wrap(instance, methodHandle));
-    }
-    if (Processor.isCompatible(method, DELETE.class, RoutingContext.class)) {
-      MethodHandle methodHandle = Processor.getMethodHandle(method, RoutingContext.class);
-      router.delete(Processor.getAnnotation(method, DELETE.class).value()).handler(wrap(instance, methodHandle));
-    }
-  }
+                route.path(annotation.path());
 
-  private static Handler<RoutingContext> wrap(final Object instance, final MethodHandle m) {
-    return ctx -> {
-      try {
-        m.invoke(instance, ctx);
-      } catch (Throwable e) {
-        ctx.fail(e);
-      }
-    };
-  }
+                for (HttpMethod httpMethod : annotation.methods()) {
+                    route.method(httpMethod);
+                }
+
+                if (annotation.isBlocking()) {
+                    route.blockingHandler(wrap(instance, methodHandle));
+                } else {
+                    route.handler(wrap(instance, methodHandle));
+                }
+            }
+            if (Processor.isCompatible(method, FailureHandler.class, RoutingContext.class)) {
+                MethodHandle methodHandle = Processor.getMethodHandle(method, RoutingContext.class);
+                route.failureHandler(wrap(instance, methodHandle));
+            }
+
+            // disabling routes annotations
+            if (Processor.isCompatible(method, Disable.class, RoutingContext.class)) {
+                route.disable();
+            }
+
+            // process http request path annotations
+            if (Processor.isCompatible(method, Path.class, RoutingContext.class)) {
+                route.path(Processor.getAnnotation(method, Path.class).value());
+            }
+
+            // process http request verb annotations
+            if (Processor.isCompatible(method, CONNECT.class, RoutingContext.class)) {
+                route.method(HttpMethod.CONNECT);
+            }
+            if (Processor.isCompatible(method, OPTIONS.class, RoutingContext.class)) {
+                route.method(HttpMethod.OPTIONS);
+            }
+            if (Processor.isCompatible(method, HEAD.class, RoutingContext.class)) {
+                route.method(HttpMethod.HEAD);
+            }
+            if (Processor.isCompatible(method, GET.class, RoutingContext.class)) {
+                route.method(HttpMethod.GET);
+            }
+            if (Processor.isCompatible(method, POST.class, RoutingContext.class)) {
+                route.method(HttpMethod.POST);
+            }
+            if (Processor.isCompatible(method, PUT.class, RoutingContext.class)) {
+                route.method(HttpMethod.PUT);
+            }
+            if (Processor.isCompatible(method, PATCH.class, RoutingContext.class)) {
+                route.method(HttpMethod.PATCH);
+            }
+            if (Processor.isCompatible(method, DELETE.class, RoutingContext.class)) {
+                route.method(HttpMethod.DELETE);
+            }
+            if (Processor.isCompatible(method, TRACE.class, RoutingContext.class)) {
+                route.method(HttpMethod.TRACE);
+            }
+
+            // process http request order annotations
+            if (Processor.isCompatible(method, Order.class, RoutingContext.class)) {
+                route.order(Processor.getAnnotation(method, Order.class).value());
+            }
+
+            // process http content negotiation annotations
+            if (Processor.isCompatible(method, Consumes.class, RoutingContext.class)) {
+                route.consumes(String.join(", ", Processor.getAnnotation(method, Consumes.class).value()));
+            }
+            if (Processor.isCompatible(method, Produces.class, RoutingContext.class)) {
+                route.produces(String.join(", ", Processor.getAnnotation(method, Produces.class).value()));
+            }
+        }
+    }
+
+    private static boolean isValidMethod(final Method method) {
+        return Processor.isCompatible(method, Handler.class, RoutingContext.class)
+            || Processor.isCompatible(method, FailureHandler.class, RoutingContext.class);
+    }
+
+    private static io.vertx.core.Handler<RoutingContext> wrap(final Object instance, final MethodHandle m) {
+        return ctx -> {
+            try {
+                m.invoke(instance, ctx);
+            } catch (Throwable e) {
+                ctx.fail(e);
+            }
+        };
+    }
 }

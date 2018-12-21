@@ -5,8 +5,10 @@ import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.ext.web.annotations.GET;
+import io.vertx.ext.web.annotations.Handler;
+import io.vertx.ext.web.annotations.Path;
 import io.vertx.ext.web.annotations.Produces;
-import org.junit.*;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 
 @RunWith(VertxUnitRunner.class)
@@ -15,7 +17,9 @@ public class AnnotatedRouterTest {
   private static Vertx vertx = Vertx.vertx();
 
   public static class TestRouter {
-    @GET("/ws")
+    @GET()
+    @Path("/ws")
+    @Handler(path = "/ws")
     public void get(RoutingContext ctx) {
       ctx.response().end("Hello ws!");
     }
@@ -54,10 +58,12 @@ public class AnnotatedRouterTest {
   }
 
   public static class TestRouter2 {
-    @GET("/ws")
+    @GET
+    @Path("/ws")
+    @Handler(path = "/ws")
     @Produces({"text/plain"})
     public void get(RoutingContext ctx) {
-      ctx.response().end("Hello ws!");
+      ctx.response().putHeader("Content-Type", "text/plain").end("Hello ws!");
     }
   }
 
