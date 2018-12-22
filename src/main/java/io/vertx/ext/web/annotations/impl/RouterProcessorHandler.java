@@ -42,18 +42,11 @@ public class RouterProcessorHandler extends AbstractAnnotationHandler<Router> {
             // create a base route
             Route route = router.route();
 
-            // handler annotations
+            // route handling annotations
             if (Processor.isCompatible(method, Handler.class, RoutingContext.class)) {
-                Handler annotation = Processor.getAnnotation(method, Handler.class);
                 MethodHandle methodHandle = Processor.getMethodHandle(method, RoutingContext.class);
 
-                route.path(annotation.path());
-
-                for (HttpMethod httpMethod : annotation.methods()) {
-                    route.method(httpMethod);
-                }
-
-                if (annotation.isBlocking()) {
+                if (Processor.getAnnotation(method, Handler.class).blocking()) {
                     route.blockingHandler(wrap(instance, methodHandle));
                 } else {
                     route.handler(wrap(instance, methodHandle));
@@ -110,10 +103,14 @@ public class RouterProcessorHandler extends AbstractAnnotationHandler<Router> {
 
             // process http content negotiation annotations
             if (Processor.isCompatible(method, Consumes.class, RoutingContext.class)) {
-                route.consumes(String.join(", ", Processor.getAnnotation(method, Consumes.class).value()));
+                final String[] mimeTypes = Processor.getAnnotation(method, Consumes.class).value();
+                for (String mimeType : mimeTypes) {
+                    route.consumes(mimeType);
+                }
             }
             if (Processor.isCompatible(method, Produces.class, RoutingContext.class)) {
-                route.produces(String.join(", ", Processor.getAnnotation(method, Produces.class).value()));
+                final String[] mimeTypes = Processor.getAnnotation(method, Produces.class).value();
+                route.produces(String.join(", ", mimeTypes));
             }
         }
     }

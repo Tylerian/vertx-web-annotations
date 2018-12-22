@@ -5,8 +5,6 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import io.vertx.core.http.HttpMethod;
-
 /**
  * # Handler
  * <p>
@@ -21,7 +19,5 @@ import io.vertx.core.http.HttpMethod;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})
 public @interface Handler {
-    String path();
-    boolean isBlocking() default false;
-    HttpMethod[] methods() default {};
+    boolean blocking() default false;
 }

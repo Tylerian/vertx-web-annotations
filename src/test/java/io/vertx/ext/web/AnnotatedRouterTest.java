@@ -19,7 +19,7 @@ public class AnnotatedRouterTest {
   public static class TestRouter {
     @GET()
     @Path("/ws")
-    @Handler(path = "/ws")
+    @Handler()
     public void get(RoutingContext ctx) {
       ctx.response().end("Hello ws!");
     }
@@ -60,7 +60,7 @@ public class AnnotatedRouterTest {
   public static class TestRouter2 {
     @GET
     @Path("/ws")
-    @Handler(path = "/ws")
+    @Handler()
     @Produces({"text/plain"})
     public void get(RoutingContext ctx) {
       ctx.response().putHeader("Content-Type", "text/plain").end("Hello ws!");
